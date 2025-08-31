@@ -1,41 +1,10 @@
-import React, { useState } from "react";
+// src/pages/CartPage.jsx
+import React from "react";
 import { Link } from "react-router-dom";
-import products from "../data/products"; // optional for suggested products
+import { useCart } from "../context/CartContext";
 
 const CartPage = () => {
-  const [cartItems, setCartItems] = useState([
-    {
-      _id: "1",
-      name: "Premium Shaker Bottle",
-      price: 12.99,
-      quantity: 2,
-      image: "https://via.placeholder.com/100/CCCCCC/FFFFFF?text=Shaker",
-    },
-    {
-      _id: "2",
-      name: "Performance T-Shirt",
-      price: 29.99,
-      quantity: 1,
-      image: "https://via.placeholder.com/100/3498db/FFFFFF?text=T-Shirt",
-    },
-  ]);
-
-  const subtotal = cartItems.reduce(
-    (acc, item) => acc + item.price * item.quantity,
-    0
-  );
-
-  const handleRemoveItem = (id) => {
-    setCartItems(cartItems.filter((item) => item._id !== id));
-  };
-
-  const handleUpdateQuantity = (id, newQuantity) => {
-    setCartItems(
-      cartItems.map((item) =>
-        item._id === id ? { ...item, quantity: Math.max(1, newQuantity) } : item
-      )
-    );
-  };
+  const { cartItems, removeFromCart, updateQuantity, subtotal } = useCart();
 
   return (
     <div className="w-full min-h-screen bg-gray-100 py-10">
@@ -53,32 +22,6 @@ const CartPage = () => {
             >
               Start shopping →
             </Link>
-
-            {/* Optional: Suggested products */}
-            <div className="mt-10">
-              <h2 className="text-xl font-semibold mb-4">You might like</h2>
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-                {products.slice(0, 4).map((prod) => (
-                  <Link
-                    key={prod._id}
-                    to={`/products/${prod.category}`}
-                    className="bg-white p-3 rounded-lg shadow hover:shadow-lg transition-shadow flex flex-col items-center"
-                  >
-                    <img
-                      src={prod.image}
-                      alt={prod.name}
-                      className="w-24 h-24 object-cover mb-2 rounded"
-                    />
-                    <span className="text-sm font-medium text-gray-700 text-center">
-                      {prod.name}
-                    </span>
-                    <span className="text-sm font-bold text-gray-900 mt-1">
-                      ${prod.price.toFixed(2)}
-                    </span>
-                  </Link>
-                ))}
-              </div>
-            </div>
           </div>
         ) : (
           <div className="flex flex-col lg:flex-row gap-10">
@@ -102,7 +45,7 @@ const CartPage = () => {
                     <div className="flex items-center mt-3">
                       <button
                         onClick={() =>
-                          handleUpdateQuantity(item._id, item.quantity - 1)
+                          updateQuantity(item._id, item.quantity - 1)
                         }
                         className="px-3 py-1 border rounded-md hover:bg-gray-100"
                       >
@@ -111,7 +54,7 @@ const CartPage = () => {
                       <span className="mx-4 font-medium">{item.quantity}</span>
                       <button
                         onClick={() =>
-                          handleUpdateQuantity(item._id, item.quantity + 1)
+                          updateQuantity(item._id, item.quantity + 1)
                         }
                         className="px-3 py-1 border rounded-md hover:bg-gray-100"
                       >
@@ -123,7 +66,7 @@ const CartPage = () => {
                     ${(item.price * item.quantity).toFixed(2)}
                   </div>
                   <button
-                    onClick={() => handleRemoveItem(item._id)}
+                    onClick={() => removeFromCart(item._id)}
                     className="ml-6 text-red-500 hover:text-red-700 transition-colors"
                   >
                     ✕
