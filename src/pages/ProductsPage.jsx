@@ -1,10 +1,10 @@
 // src/pages/ProductsPage.jsx
 import React, { useState, useMemo, useEffect } from "react";
-import { useParams } from "react-router-dom"; 
+import { useParams } from "react-router-dom";
 import ProductCard from "../components/common/ProductCard";
 import { Alert, AlertDescription, AlertTitle } from "../components/ui/alert";
 import { AlertCircle } from "lucide-react";
-import products from "../data/products"; // static products data
+import productsData from "../data/products"; // your allProducts generator
 
 // ---------------- Sidebar Filters ----------------
 const FiltersSidebar = ({
@@ -46,7 +46,6 @@ const FiltersSidebar = ({
           <div>
             <h4 className="font-medium mb-2">Categories</h4>
             <div className="flex flex-col gap-2">
-              {/* All Products option */}
               <label className="flex items-center gap-2 text-sm">
                 <input
                   type="checkbox"
@@ -56,17 +55,16 @@ const FiltersSidebar = ({
                 All Products
               </label>
 
-              {/* Dynamic categories */}
               {uniqueCategories.map((cat) => (
                 <label key={cat} className="flex items-center gap-2 text-sm">
                   <input
                     type="checkbox"
-                    checked={categories.includes(cat.toLowerCase())}
+                    checked={categories.includes(cat)}
                     onChange={() =>
                       setCategories((prev) =>
-                        prev.includes(cat.toLowerCase())
-                          ? prev.filter((c) => c !== cat.toLowerCase())
-                          : [...prev, cat.toLowerCase()]
+                        prev.includes(cat)
+                          ? prev.filter((c) => c !== cat)
+                          : [...prev, cat]
                       )
                     }
                   />
@@ -120,76 +118,81 @@ const FiltersSidebar = ({
 
 // ---------------- Main Page ----------------
 const ProductsPage = () => {
-  const { category } = useParams(); 
+  const { category } = useParams();
   const [search, setSearch] = useState("");
   const [categories, setCategories] = useState([]);
   const [minPrice, setMinPrice] = useState("");
   const [maxPrice, setMaxPrice] = useState("");
   const [sort, setSort] = useState("default");
-  const [visibleCount, setVisibleCount] = useState(12); // initial products shown
+  const [visibleCount, setVisibleCount] = useState(12);
 
-  // Unique categories for sidebar
+  // Normalize products
+  const products = useMemo(
+    () =>
+      productsData.map((p) => ({
+        ...p,
+        category: p.category.trim(),
+        finalPrice: p.finalPrice,
+        rating: p.rating || 0,
+        isFeatured: !!p.isFeatured,
+        isLatest: !!p.isLatest,
+        isTopRated: !!p.isTopRated,
+      })),
+    []
+  );
+
   const uniqueCategories = [...new Set(products.map((p) => p.category))];
 
-  // Determine if current category is special (Featured, Latest, Top Rated)
-  const isSpecialCategory =
-    ["featured", "latest", "top-rated"].includes(category?.toLowerCase());
+  const isSpecialCategory = ["featured", "latest", "top-rated"].includes(
+    category?.toLowerCase()
+  );
 
-  // Reset filters when category changes
+  // Reset filters on category change
   useEffect(() => {
     if (isSpecialCategory) {
-      setCategories([]); // ignore filters
+      setCategories([]);
       setSearch("");
       setMinPrice("");
       setMaxPrice("");
       setSort("default");
     } else if (category && category.toLowerCase() !== "all") {
-      setCategories([category.toLowerCase()]);
+      setCategories([category.charAt(0).toUpperCase() + category.slice(1)]);
     } else {
-      setCategories([]); // show all if "all" or no category
+      setCategories([]);
     }
-    setVisibleCount(12); // reset products shown
+    setVisibleCount(12);
   }, [category]);
 
-  // Filtering & Sorting
+  // Filter & sort
   const filteredProducts = useMemo(() => {
     let result = [...products];
+    const catLower = category?.toLowerCase();
 
-    // Special categories
-    if (category?.toLowerCase() === "featured") {
-      result = result.filter((p) => p.featured);
-    } else if (category?.toLowerCase() === "latest") {
-      result = result.filter((p) => p.latest);
-    } else if (category?.toLowerCase() === "top-rated") {
-      result = result.filter((p) => p.rating >= 4.5);
-    } else {
-      // Normal filters
-      if (search) {
+    if (catLower === "featured") result = result.filter((p) => p.isFeatured);
+    else if (catLower === "latest") result = result.filter((p) => p.isLatest);
+    else if (catLower === "top-rated")
+      result = result.filter((p) => p.isTopRated);
+    else {
+      if (search)
         result = result.filter((p) =>
           p.name.toLowerCase().includes(search.toLowerCase())
         );
-      }
-      if (categories.length > 0) {
-        result = result.filter((p) =>
-          categories.includes(p.category.toLowerCase())
-        );
-      }
-      if (minPrice) result = result.filter((p) => p.price >= parseFloat(minPrice));
-      if (maxPrice) result = result.filter((p) => p.price <= parseFloat(maxPrice));
-
-      // Sorting
-      if (sort === "priceLowHigh") result.sort((a, b) => a.price - b.price);
-      if (sort === "priceHighLow") result.sort((a, b) => b.price - a.price);
-      if (sort === "rating") result.sort((a, b) => b.rating - a.rating);
+      if (categories.length > 0)
+        result = result.filter((p) => categories.includes(p.category));
+      if (minPrice) result = result.filter((p) => p.finalPrice >= parseFloat(minPrice));
+      if (maxPrice) result = result.filter((p) => p.finalPrice <= parseFloat(maxPrice));
     }
 
-    return result;
-  }, [search, categories, minPrice, maxPrice, sort, category]);
+    // Sorting
+    if (sort === "priceLowHigh") result.sort((a, b) => a.finalPrice - b.finalPrice);
+    if (sort === "priceHighLow") result.sort((a, b) => b.finalPrice - a.finalPrice);
+    if (sort === "rating") result.sort((a, b) => b.rating - a.rating);
 
-  // Products to display
+    return result;
+  }, [products, search, categories, minPrice, maxPrice, sort, category]);
+
   const displayedProducts = filteredProducts.slice(0, visibleCount);
 
-  // Title
   const getTitle = () => {
     if (!category) return "All Products";
     const lower = category.toLowerCase();
@@ -202,7 +205,6 @@ const ProductsPage = () => {
 
   return (
     <div className="container mx-auto px-4 py-8 flex gap-8">
-      {/* Sidebar */}
       <FiltersSidebar
         search={search}
         setSearch={setSearch}
@@ -218,7 +220,6 @@ const ProductsPage = () => {
         disableFilters={isSpecialCategory}
       />
 
-      {/* Products Grid */}
       <div className="flex-1">
         <h1 className="text-3xl font-bold mb-6 text-gray-800">{getTitle()}</h1>
 
@@ -236,11 +237,10 @@ const ProductsPage = () => {
           <>
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
               {displayedProducts.map((product) => (
-                <ProductCard key={product._id} product={product} />
+                <ProductCard key={product.id} product={product} />
               ))}
             </div>
 
-            {/* Load More button */}
             {visibleCount < filteredProducts.length && (
               <div className="flex justify-center mt-8">
                 <button

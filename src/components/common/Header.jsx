@@ -20,13 +20,8 @@ const Header = () => {
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const timerRef = useRef(null);
 
-  const { cart } = useCart();
 
-  // ✅ Fix: ensure cart is always an array before reduce
-  const cartCount = (cart || []).reduce(
-    (acc, item) => acc + (item.quantity || 1),
-    0
-  );
+  const { cartItems, cartCount } = useCart();
 
   const handleMouseEnter = () => {
     clearTimeout(timerRef.current);
@@ -70,7 +65,6 @@ const Header = () => {
                 {/* Mobile Nav */}
                 <div className="flex flex-col space-y-4 text-lg font-medium">
                   <Link to="/" className="hover:text-yellow-500" onClick={() => setIsSheetOpen(false)}>Home</Link>
-                  
                   {categories.map((cat) => (
                     <Link
                       key={cat.path}
@@ -81,10 +75,8 @@ const Header = () => {
                       {cat.name}
                     </Link>
                   ))}
-
                   <Link to="/about" className="hover:text-yellow-500" onClick={() => setIsSheetOpen(false)}>About</Link>
                   <Link to="/contact" className="hover:text-yellow-500" onClick={() => setIsSheetOpen(false)}>Contact</Link>
-                  
                   <Link to="/cart" className="flex items-center gap-2 hover:text-yellow-500" onClick={() => setIsSheetOpen(false)}>
                     <ShoppingCart className="w-5 h-5" />
                     <span>Cart</span>
@@ -92,7 +84,6 @@ const Header = () => {
                       <Badge className="bg-yellow-500 text-black font-semibold">{cartCount}</Badge>
                     )}
                   </Link>
-                  
                   <Link to="/login" onClick={() => setIsSheetOpen(false)}>
                     <Button className="w-full bg-yellow-500 hover:bg-yellow-600 rounded-lg text-black font-semibold">
                       Login

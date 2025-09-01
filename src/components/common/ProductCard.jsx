@@ -1,15 +1,15 @@
+// src/components/common/ProductCard.jsx
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { Star, ShoppingCart, Heart } from "lucide-react";
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from "../ui/card";
 import { Button } from "../ui/button";
-import { useCart } from "../../context/CartContext"; // ✅ import the cart context
+import { useCart } from "../../context/CartContext";
 
 function ProductCard({ product }) {
   const {
-    _id, // make sure your product uses _id, not id
+    id,
     name,
-    slug,
     brand,
     images = [],
     rating = 0,
@@ -24,17 +24,19 @@ function ProductCard({ product }) {
   } = product;
 
   const [isWishlisted, setIsWishlisted] = useState(false);
-  const { addToCart } = useCart(); // ✅ get addToCart from context
+  const { addToCart } = useCart();
 
   const formatPrice = (value) =>
     new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR" }).format(value || 0);
 
   const handleAddToCart = () => {
+    if (!id) return console.error("Product id is missing!");
     addToCart({
-      _id,
+      id,
       name,
       price: finalPrice,
       image: images[0] || "https://placehold.co/400x300?text=No+Image",
+      quantity: 1,
     });
   };
 
@@ -72,7 +74,7 @@ function ProductCard({ product }) {
         </button>
       </div>
 
-      <Link to={`/product/${_id}-${slug}`} className="block">
+      <Link to={`/product/${id}`} className="block">
         <div className="relative h-60 bg-gray-50 flex items-center justify-center overflow-hidden rounded-t-xl">
           <img
             loading="lazy"
@@ -94,7 +96,7 @@ function ProductCard({ product }) {
 
         <CardContent className="px-4 py-2">
           <div className="flex items-center mb-2">
-            {Array(5).fill(0).map((_, i) => (
+            {Array.from({ length: 5 }).map((_, i) => (
               <Star
                 key={i}
                 className={`w-4 h-4 ${i < Math.round(rating) ? "text-yellow-400 fill-yellow-400" : "text-gray-300"}`}

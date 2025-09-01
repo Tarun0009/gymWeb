@@ -30,19 +30,19 @@ const HomePage = () => {
   useEffect(() => {
     const interval = setInterval(() => {
       setCurrentBanner((prev) => (prev + 1) % banners.length);
-    }, 4000); // rotate every 4s
+    }, 4000);
     return () => clearInterval(interval);
   }, [banners.length]);
 
   const categories = [
-    { id: 1, name: "Apparel", color: "from-blue-500 to-indigo-500" },
-    { id: 2, name: "Accessories", color: "from-green-500 to-teal-500" },
-    { id: 3, name: "Supplements", color: "from-orange-500 to-pink-500" },
+    { id: 1, name: "Gymwear", color: "from-blue-500 to-indigo-600" },
+    { id: 2, name: "Accessories", color: "from-green-400 to-teal-500" },
+    { id: 3, name: "Supplements", color: "from-orange-400 to-pink-500" },
     { id: 4, name: "Equipment", color: "from-purple-500 to-pink-500" },
   ];
 
   const SectionHeader = ({ title, link }) => (
-    <div className="flex justify-between items-center mb-4 md:mb-6">
+    <div className="flex justify-between items-center mb-6 md:mb-8">
       <h2 className="text-2xl md:text-3xl font-bold text-gray-900">{title}</h2>
       {link && (
         <Link
@@ -61,16 +61,15 @@ const HomePage = () => {
     if (section === "topRated") setTopRatedCount((prev) => prev + INITIAL_COUNT);
   };
 
-  // Horizontal carousel with fixed card height
   const ProductCarousel = ({ products, count, section }) => {
     const visibleProducts = products.slice(0, count);
     return (
-      <div>
-        <div className="flex space-x-4 overflow-x-auto scrollbar-hide pb-2">
+      <div className="relative">
+        <div className="flex space-x-6 overflow-x-auto scrollbar-hide pb-2">
           {visibleProducts.map((product) => (
             <div
               key={product.id}
-              className="flex-shrink-0 w-[220px] md:w-[250px] lg:w-[280px] h-[430px]"
+              className="flex-shrink-0 w-[220px] md:w-[240px] lg:w-[260px] h-[430px] transition-transform hover:scale-105"
             >
               <ProductCard product={product} />
             </div>
@@ -80,7 +79,7 @@ const HomePage = () => {
           <div className="flex justify-center mt-4">
             <button
               onClick={() => handleLoadMore(section)}
-              className="px-6 py-2 bg-blue-600 text-white rounded-full hover:bg-blue-700 transition"
+              className="px-6 py-2 bg-blue-600 text-white rounded-full hover:bg-blue-700 transition-shadow shadow-md"
             >
               Load More
             </button>
@@ -91,9 +90,10 @@ const HomePage = () => {
   };
 
   return (
-    <div className="container mx-auto px-4 py-10 space-y-20">
+    <div className="container mx-auto px-4 py-12 space-y-24">
+      
       {/* Hero / Banner Carousel */}
-      <section className="relative rounded-3xl overflow-hidden shadow-lg">
+      <section className="relative rounded-3xl overflow-hidden shadow-xl">
         <img
           src={banners[currentBanner]}
           alt="Hero Banner"
@@ -124,10 +124,10 @@ const HomePage = () => {
               onClick={() =>
                 navigate(`/products/${slugify(category.name, { lower: true })}`)
               }
-              className="cursor-pointer rounded-xl overflow-hidden shadow-md hover:shadow-xl transition-all group"
+              className="cursor-pointer rounded-xl overflow-hidden shadow-md hover:shadow-xl transition-transform hover:scale-105 group"
             >
               <CardContent
-                className={`bg-gradient-to-r ${category.color} text-white p-8 flex items-center justify-center h-32 font-semibold text-lg hover:scale-105 transition`}
+                className={`bg-gradient-to-r ${category.color} text-white p-8 flex items-center justify-center h-32 font-semibold text-lg`}
               >
                 {category.name}
               </CardContent>

@@ -1,10 +1,16 @@
 // src/pages/CartPage.jsx
 import React from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useCart } from "../context/CartContext";
 
 const CartPage = () => {
   const { cartItems, removeFromCart, updateQuantity, subtotal } = useCart();
+  const navigate = useNavigate();
+
+  const handleCheckout = () => {
+    if (cartItems.length === 0) return;
+    navigate("/checkout");
+  };
 
   return (
     <div className="w-full min-h-screen bg-gray-100 py-10">
@@ -29,7 +35,7 @@ const CartPage = () => {
             <div className="lg:w-2/3 space-y-6">
               {cartItems.map((item) => (
                 <div
-                  key={item._id}
+                  key={item.id}
                   className="flex items-center p-5 bg-white rounded-xl shadow hover:shadow-lg transition-shadow"
                 >
                   <img
@@ -41,20 +47,23 @@ const CartPage = () => {
                     <h3 className="text-lg font-semibold text-gray-800">
                       {item.name}
                     </h3>
-                    <p className="text-gray-600">${item.price.toFixed(2)}</p>
+                    <p className="text-gray-600">
+                      ₹{item.price.toLocaleString("en-IN")}
+                    </p>
                     <div className="flex items-center mt-3">
                       <button
                         onClick={() =>
-                          updateQuantity(item._id, item.quantity - 1)
+                          updateQuantity(item.id, item.quantity - 1)
                         }
-                        className="px-3 py-1 border rounded-md hover:bg-gray-100"
+                        disabled={item.quantity <= 1}
+                        className="px-3 py-1 border rounded-md hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
                       >
                         -
                       </button>
                       <span className="mx-4 font-medium">{item.quantity}</span>
                       <button
                         onClick={() =>
-                          updateQuantity(item._id, item.quantity + 1)
+                          updateQuantity(item.id, item.quantity + 1)
                         }
                         className="px-3 py-1 border rounded-md hover:bg-gray-100"
                       >
@@ -63,10 +72,10 @@ const CartPage = () => {
                     </div>
                   </div>
                   <div className="flex-shrink-0 text-lg font-bold text-gray-900">
-                    ${(item.price * item.quantity).toFixed(2)}
+                    ₹{(item.price * item.quantity).toLocaleString("en-IN")}
                   </div>
                   <button
-                    onClick={() => removeFromCart(item._id)}
+                    onClick={() => removeFromCart(item.id)}
                     className="ml-6 text-red-500 hover:text-red-700 transition-colors"
                   >
                     ✕
@@ -77,11 +86,11 @@ const CartPage = () => {
 
             {/* Order Summary */}
             <div className="lg:w-1/3">
-              <div className="p-8 bg-white rounded-xl shadow-lg sticky top-20">
+              <div className="p-8 bg-white rounded-xl shadow-lg sticky top-20 flex flex-col">
                 <h2 className="text-2xl font-bold mb-6">Order Summary</h2>
                 <div className="flex justify-between text-lg mb-3">
                   <span>Subtotal</span>
-                  <span>${subtotal.toFixed(2)}</span>
+                  <span>₹{subtotal.toLocaleString("en-IN")}</span>
                 </div>
                 <div className="flex justify-between text-lg mb-4 border-b pb-4">
                   <span>Shipping</span>
@@ -89,9 +98,12 @@ const CartPage = () => {
                 </div>
                 <div className="flex justify-between text-2xl font-bold text-gray-900 mb-8">
                   <span>Total</span>
-                  <span>${subtotal.toFixed(2)}</span>
+                  <span>₹{subtotal.toLocaleString("en-IN")}</span>
                 </div>
-                <button className="w-full bg-blue-600 text-white font-bold py-4 rounded-lg hover:bg-blue-700 transition-colors shadow-md">
+                <button
+                  onClick={handleCheckout}
+                  className="w-full bg-yellow-500 hover:bg-yellow-600 text-black font-bold py-4 rounded-lg transition-shadow shadow-md"
+                >
                   Proceed to Checkout →
                 </button>
               </div>
