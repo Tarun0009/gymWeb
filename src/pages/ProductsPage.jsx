@@ -4,7 +4,7 @@ import { useParams } from "react-router-dom";
 import ProductCard from "../components/common/ProductCard";
 import { Alert, AlertDescription, AlertTitle } from "../components/ui/alert";
 import { AlertCircle } from "lucide-react";
-import productsData from "../data/products"; // your allProducts generator
+import productsData from "../data/products"; 
 
 // ---------------- Sidebar Filters ----------------
 const FiltersSidebar = ({

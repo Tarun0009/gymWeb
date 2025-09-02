@@ -1,8 +1,10 @@
+// src/pages/ProductDetailsPage.jsx
 import React, { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import { Card, CardContent } from "../components/ui/card";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
+
 import {
   Star,
   Heart,
@@ -10,15 +12,13 @@ import {
   Truck,
   ShieldCheck,
   RotateCcw,
-  Tag,
-  Gift,
-  ChevronRight,
-  ChevronLeft,
   XCircle,
   CheckCircle2,
 } from "lucide-react";
+import productsData from "../data/products"; 
+import { useCart } from "../context/CartContext"; // ✅ FIX: import useCart
 
-// Dummy data for a real-world feel
+// Dummy pincode delivery times
 const pincodeData = {
   "110001": "Delivery in 3-4 days",
   "400001": "Delivery in 5-6 days",
@@ -33,44 +33,38 @@ const ProductDetailsPage = () => {
   const [quantity, setQuantity] = useState(1);
   const [pincode, setPincode] = useState("");
   const [pincodeStatus, setPincodeStatus] = useState(null);
+  const { addToCart } = useCart(); // ✅ FIX: get addToCart
 
   useEffect(() => {
     const fetchProduct = async () => {
       try {
         setLoading(true);
-        await new Promise((resolve) => setTimeout(resolve, 800)); // Simulate API call
+        await new Promise((resolve) => setTimeout(resolve, 500)); // Simulate API call
 
-        const dummyProduct = {
-          _id: id,
-          name: `Pro-Fit Training T-Shirt`,
-          brand: "Gymshark",
-          description:
-            "A high-performance training T-shirt designed for durability, sweat resistance, and all-day comfort. Its breathable fabric and ergonomic design make it perfect for intense workouts.",
-          highlights: [
-            "Premium Dry-Fit fabric",
-            "Anti-Sweat Technology",
-            "4-Way Stretch Material",
-            "Lightweight & Breathable",
-          ],
-          price: 999,
-          originalPrice: 1499,
-          discount: 33, // 100 * (1499-999) / 1499
-          stock: 20,
-          category: "Gym Apparel",
-          rating: 4.5,
-          reviews: 120,
-          images: [
-            "https://via.placeholder.com/600/3498db/FFFFFF?text=Product+Front",
-            "https://via.placeholder.com/600/8e44ad/FFFFFF?text=Product+Side",
-            "https://via.placeholder.com/600/e74c3c/FFFFFF?text=Product+Back",
-            "https://via.placeholder.com/600/27ae60/FFFFFF?text=Details",
-          ],
+        const foundProduct = productsData.find(
+          (p) => String(p.id) === String(id)
+        );
+
+        if (!foundProduct) {
+          setError("Product not found.");
+          return;
+        }
+
+        // Ensure images array exists
+        const safeProduct = {
+          ...foundProduct,
+          images:
+            foundProduct.images && foundProduct.images.length > 0
+              ? foundProduct.images
+              : [
+                  "https://via.placeholder.com/600/3498db/FFFFFF?text=Product+Image",
+                ],
         };
 
-        setProduct(dummyProduct);
-        setSelectedImage(dummyProduct.images[0]);
+        setProduct(safeProduct);
+        setSelectedImage(safeProduct.images[0]);
       } catch (err) {
-        setError("Product not found or an error occurred.");
+        setError("Product not found or an error occurred.", err);
       } finally {
         setLoading(false);
       }
@@ -84,21 +78,17 @@ const ProductDetailsPage = () => {
     setPincodeStatus(status);
   };
 
-  if (loading) {
+  if (loading)
     return (
       <div className="text-center py-20 text-xl text-gray-700">
         Loading product details...
       </div>
     );
-  }
 
-  if (error || !product) {
+  if (error || !product)
     return (
-      <div className="text-center py-20 text-xl text-red-500">
-        Product not found.
-      </div>
+      <div className="text-center py-20 text-xl text-red-500">{error}</div>
     );
-  }
 
   return (
     <div className="container mx-auto px-4 py-12">
@@ -114,18 +104,20 @@ const ProductDetailsPage = () => {
               />
             </CardContent>
           </Card>
-          
+
           {/* Thumbnails */}
           <div className="flex gap-3 mt-4 overflow-x-auto w-full max-w-lg">
-            {product.images.map((image, index) => (
+            {product.images.map((img, idx) => (
               <img
-                key={index}
-                src={image}
-                alt={`View ${index + 1}`}
+                key={idx}
+                src={img}
+                alt={`View ${idx + 1}`}
                 className={`w-24 h-24 object-cover rounded-md cursor-pointer border-2 transition ${
-                  selectedImage === image ? "border-blue-600" : "border-gray-200 hover:border-blue-400"
+                  selectedImage === img
+                    ? "border-blue-600"
+                    : "border-gray-200 hover:border-blue-400"
                 }`}
-                onClick={() => setSelectedImage(image)}
+                onClick={() => setSelectedImage(img)}
               />
             ))}
           </div>
@@ -135,7 +127,9 @@ const ProductDetailsPage = () => {
         <div className="space-y-6">
           <div className="flex items-start justify-between">
             <div>
-              <p className="text-sm text-gray-500 uppercase font-semibold tracking-wider">{product.brand}</p>
+              <p className="text-sm text-gray-500 uppercase font-semibold tracking-wider">
+                {product.brand}
+              </p>
               <h1 className="text-4xl font-extrabold text-gray-900 leading-tight">
                 {product.name}
               </h1>
@@ -152,16 +146,20 @@ const ProductDetailsPage = () => {
 
           {/* Ratings */}
           <div className="flex items-center gap-2">
-            {Array(5).fill(0).map((_, i) => (
-              <Star
-                key={i}
-                className={`w-5 h-5 ${
-                  i < Math.floor(product.rating) ? "text-yellow-400 fill-yellow-400" : "text-gray-300"
-                }`}
-              />
-            ))}
+            {Array(5)
+              .fill(0)
+              .map((_, i) => (
+                <Star
+                  key={i}
+                  className={`w-5 h-5 ${
+                    i < Math.floor(product.rating)
+                      ? "text-yellow-400 fill-yellow-400"
+                      : "text-gray-300"
+                  }`}
+                />
+              ))}
             <span className="text-sm text-gray-600 font-medium">
-              {product.rating} ({product.reviews} Reviews)
+              {product.rating} ({product.reviews || 0} Reviews)
             </span>
           </div>
 
@@ -170,17 +168,19 @@ const ProductDetailsPage = () => {
           </p>
 
           {/* Highlights */}
-          <div>
-            <h3 className="text-lg font-bold mb-2">Highlights</h3>
-            <ul className="list-disc list-inside text-gray-700 space-y-1">
-              {product.highlights.map((point, index) => (
-                <li key={index}>{point}</li>
-              ))}
-            </ul>
-          </div>
+          {product.highlights?.length > 0 && (
+            <div>
+              <h3 className="text-lg font-bold mb-2">Highlights</h3>
+              <ul className="list-disc list-inside text-gray-700 space-y-1">
+                {product.highlights.map((point, index) => (
+                  <li key={index}>{point}</li>
+                ))}
+              </ul>
+            </div>
+          )}
         </div>
 
-        {/* === COLUMN 3: THE BUY BOX === */}
+        {/* === COLUMN 3: BUY BOX === */}
         <aside className="space-y-6">
           <Card className="p-6 shadow-xl border rounded-lg">
             <div className="flex items-baseline gap-2 mb-2">
@@ -200,7 +200,7 @@ const ProductDetailsPage = () => {
             </div>
             <p className="text-sm text-gray-500 mb-6">Inclusive of all taxes</p>
 
-            {/* Delivery Availability */}
+            {/* Delivery */}
             <div className="mb-6">
               <div className="flex items-center gap-2 mb-2 text-gray-700 font-medium">
                 <Truck className="w-5 h-5 text-gray-500" />
@@ -243,7 +243,9 @@ const ProductDetailsPage = () => {
                   <span className="text-gray-700 font-medium">Quantity:</span>
                   <div className="flex items-center border rounded-md overflow-hidden">
                     <button
-                      onClick={() => setQuantity((q) => (q > 1 ? q - 1 : 1))}
+                      onClick={() =>
+                        setQuantity((q) => (q > 1 ? q - 1 : 1))
+                      }
                       className="px-3 py-1 border-r hover:bg-gray-100"
                     >
                       -
@@ -251,7 +253,9 @@ const ProductDetailsPage = () => {
                     <span className="px-4 py-1">{quantity}</span>
                     <button
                       onClick={() =>
-                        setQuantity((q) => (q < product.stock ? q + 1 : product.stock))
+                        setQuantity((q) =>
+                          q < product.stock ? q + 1 : product.stock
+                        )
                       }
                       className="px-3 py-1 border-l hover:bg-gray-100"
                     >
@@ -268,6 +272,15 @@ const ProductDetailsPage = () => {
             <Button
               className="w-full mb-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3"
               disabled={product.stock === 0}
+              onClick={() =>
+                addToCart({
+                  id: product.id,
+                  name: product.name,
+                  price: product.price,
+                  image: product.images[0],
+                  quantity,
+                })
+              }
             >
               Add to Cart
             </Button>
@@ -278,8 +291,8 @@ const ProductDetailsPage = () => {
               Buy Now
             </Button>
           </Card>
-          
-          {/* Services & Offers */}
+
+          {/* Services */}
           <div className="space-y-4">
             <div className="flex items-center gap-4">
               <Truck className="w-5 h-5 text-gray-500" />
@@ -299,14 +312,14 @@ const ProductDetailsPage = () => {
               <ShieldCheck className="w-5 h-5 text-gray-500" />
               <div className="flex flex-col text-sm">
                 <span className="font-medium text-gray-800">1-Year Warranty</span>
-                <span className="text-gray-600">Against manufacturing defects</span>
+                <span className="text-gray-600">
+                  Against manufacturing defects
+                </span>
               </div>
             </div>
           </div>
         </aside>
       </div>
-
-     
     </div>
   );
 };

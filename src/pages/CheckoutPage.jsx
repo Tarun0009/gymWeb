@@ -28,13 +28,37 @@ const CheckoutPage = () => {
   };
 
   const handlePlaceOrder = () => {
+    // validate shipping info
     for (let key in shippingInfo) {
       if (!shippingInfo[key]) {
         alert(`Please fill ${key}`);
         return;
       }
     }
-    alert("Order placed successfully!");
+
+    // build order object
+    const order = {
+      id: "ORD" + Date.now(),
+      date: new Date().toLocaleString(),
+      paymentMethod,
+      address: {
+        name: shippingInfo.fullName,
+        email: shippingInfo.email,
+        phone: shippingInfo.phone,
+        street: shippingInfo.address,
+        city: shippingInfo.city,
+        state: shippingInfo.state,
+        pincode: shippingInfo.zip,
+        country: shippingInfo.country,
+      },
+      items: cartItems,
+      subtotal: totalAmount,
+    };
+
+    // save order in localStorage
+    localStorage.setItem("latestOrder", JSON.stringify(order));
+
+    // clear cart + redirect
     clearCart();
     navigate("/order-confirmation");
   };
@@ -44,7 +68,8 @@ const CheckoutPage = () => {
     0
   );
 
-  const placeholderImage = "https://via.placeholder.com/100x100.png?text=Product";
+  const placeholderImage =
+    "https://via.placeholder.com/100x100.png?text=Product";
 
   if (cartItems.length === 0) {
     return (
@@ -66,22 +91,64 @@ const CheckoutPage = () => {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Shipping & Payment */}
         <div className="lg:col-span-2 space-y-6">
+          {/* Shipping */}
           <div className="bg-white p-6 rounded-xl shadow-md border border-gray-200">
             <h2 className="text-xl font-semibold mb-4">Shipping Information</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {Object.keys(shippingInfo).map((key) => (
-                <Input
-                  key={key}
-                  name={key}
-                  value={shippingInfo[key]}
-                  onChange={handleChange}
-                  placeholder={key.charAt(0).toUpperCase() + key.slice(1)}
-                  disabled={key === "country"}
-                />
-              ))}
+              <Input
+                name="fullName"
+                value={shippingInfo.fullName}
+                onChange={handleChange}
+                placeholder="Full Name"
+              />
+              <Input
+                name="email"
+                type="email"
+                value={shippingInfo.email}
+                onChange={handleChange}
+                placeholder="Email Address"
+              />
+              <Input
+                name="phone"
+                type="tel"
+                value={shippingInfo.phone}
+                onChange={handleChange}
+                placeholder="Phone Number"
+              />
+              <Input
+                name="address"
+                value={shippingInfo.address}
+                onChange={handleChange}
+                placeholder="Street Address"
+              />
+              <Input
+                name="city"
+                value={shippingInfo.city}
+                onChange={handleChange}
+                placeholder="City"
+              />
+              <Input
+                name="state"
+                value={shippingInfo.state}
+                onChange={handleChange}
+                placeholder="State"
+              />
+              <Input
+                name="zip"
+                value={shippingInfo.zip}
+                onChange={handleChange}
+                placeholder="PIN Code"
+              />
+              <Input
+                name="country"
+                value={shippingInfo.country}
+                onChange={handleChange}
+                disabled
+              />
             </div>
           </div>
 
+          {/* Payment */}
           <div className="bg-white p-6 rounded-xl shadow-md border border-gray-200">
             <h2 className="text-xl font-semibold mb-4">Payment Method</h2>
             <div className="flex flex-col gap-3">
@@ -151,10 +218,10 @@ const CheckoutPage = () => {
           </div>
 
           <Button
-            className="w-full mt-6 bg-yellow-500 hover:bg-yellow-600 text-black font-semibold rounded-lg"
+            className="w-full mt-6 bg-yellow-500 hover:bg-yellow-600 text-black font-semibold rounded-lg py-3"
             onClick={handlePlaceOrder}
           >
-            Place Order
+            Place Your Order
           </Button>
         </div>
       </div>
